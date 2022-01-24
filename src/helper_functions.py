@@ -32,7 +32,14 @@ def make_bar_plot(df_, column, X_tick_labels, title, df_title, y_label, x_label,
     params
     ======
     df_ (pandas.core.frame.DataFrame): pandas dataframe
-    column (str): 
+    column (str): name of the feature column to view the data
+    X_tick_labels (list): contains strings to label the x ticks
+    title (str): title for the plot
+    df_title (str): aids in consistent naming
+    y_label (str): y label for the plot
+    x label (str): x label for the plot
+    color (tuple): contains RGB float values
+    limit (DEFAULT=None, int): allows a threshold to be set to limit the x ticks
 
     attrs
     =====
@@ -64,105 +71,26 @@ def make_bar_plot(df_, column, X_tick_labels, title, df_title, y_label, x_label,
         f'../figs/{df_title}_{"_".join(title.lower().split(" "))}.png', bbox_inches='tight')
 
 
-def nullity_matrix(df_, df_title, color):
-    '''
-    Provides an overview of the data
-
-    params
-    ======
-    df (pandas.core.frame.DataFrame): pandas dataframe
-
-    attrs
-    =====
-    none
-
-    returns
-    =======
-    none
-    '''
-    ax = missingno.matrix(df_, figsize=(16, 9), color=color)
-    ax.set_title('Nullity Matrix')
-    ax.figure.savefig(
-        f'../figs/{df_title}_nullity_matrix.png', bbox_inches='tight')
-
-
-def make_location_df(df_):
-    '''
-    Provides an overview of the data
-
-    params
-    ======
-    df (pandas.core.frame.DataFrame): pandas dataframe
-
-    attrs
-    =====
-    none
-
-    returns
-    =======
-    none
-    '''
-    location_df = df_[~df_['Latitude'].isna()]
-    location_df.drop(['Event Number', 'Complaint Number'],
-                     axis=1, inplace=True)
-
-    location_df = location_df[(location_df != 0).all(1)]
-
-    center_lat = location_df['Latitude'].mean()
-    center_long = location_df['Longitude'].mean()
-
-    lat = location_df['Latitude'].to_numpy()
-    long = location_df['Longitude'].to_numpy()
-
-    return location_df, center_lat, center_long, lat, long
-
-
-def map_plot(df_, df_title):
-    '''
-    Provides an overview of the data
-
-    params
-    ======
-    df (pandas.core.frame.DataFrame): pandas dataframe
-
-    attrs
-    =====
-    none
-
-    returns
-    =======
-    none
-    '''
-    location_df, center_lat, center_long, lat, long = make_location_df(df_)
-
-    map_ = folium.Map(location=[center_lat, center_long], zoom_start=11)
-
-    for lat_, long_ in zip(lat, long):
-        folium.CircleMarker(
-            location=[lat_, long_],
-            radius=3,
-            color=(0, 0, 0),
-            fill_color=(.5, .5, .5),
-            fill_opacity=0.05).add_to(map_)
-
-    map_.save(f'../figs/{df_title}_map.html')
-    return map_
-
-
 def make_dt_bar_plot(df_, title, df_title, y_label, x_label, color, limit=None):
     '''
-    Provides an overview of the data
+    Basic construct of a bar plot tailored to a datetime feature
 
     params
-    ======
-    df (pandas.core.frame.DataFrame): pandas dataframe
+    == == ==
+    df_(pandas.core.frame.DataFrame): pandas dataframe
+    title(str): title for the plot
+    df_title(str): aids in consistent naming
+    y_label(str): y label for the plot
+    x label(str): x label for the plot
+    color(tuple): contains RGB float values
+    limit(DEFAULT=None, int): allows a threshold to be set to limit the x ticks
 
     attrs
-    =====
+    == == =
     none
 
     returns
-    =======
+    == == == =
     none
     '''
     fig, ax = plt.subplots(1, figsize=(16, 9))
@@ -193,3 +121,95 @@ def make_dt_bar_plot(df_, title, df_title, y_label, x_label, color, limit=None):
 
     plt.savefig(
         f'../figs/{df_title}_{"_".join(title.lower().split(" "))}{x_label}.png', bbox_inches='tight')
+
+
+def nullity_matrix(df_, df_title, color):
+    '''
+    Visual display of the missing data across all features
+
+    params
+    ======
+    df_ (pandas.core.frame.DataFrame): pandas dataframe
+    df_title(str): aids in consistent naming
+    color(tuple): contains RGB float values
+
+    attrs
+    =====
+    none
+
+    returns
+    =======
+    none
+    '''
+    ax = missingno.matrix(df_, figsize=(16, 9), color=color)
+    ax.set_title('Nullity Matrix')
+    ax.figure.savefig(
+        f'../figs/{df_title}_nullity_matrix.png', bbox_inches='tight')
+
+
+def make_location_df(df_):
+    '''
+    Subsets the data to only include rows with complete lat/long
+
+    params
+    ======
+    df_ (pandas.core.frame.DataFrame): pandas dataframe
+
+    attrs
+    =====
+    none
+
+    returns
+    =======
+    location_df (pandas.core.frame.DataFrame): pandas dataframe
+    center_lat (float): mean latitude of all available data 
+    center_long (float): mean longitude of all available data
+    lat (numpy.ndarry): contains floats of all latitudes
+    long (numpy.ndarry): contains floats of all longitudes
+    '''
+    location_df = df_[~df_['Latitude'].isna()]
+    location_df.drop(['Event Number', 'Complaint Number'],
+                     axis=1, inplace=True)
+
+    location_df = location_df[(location_df != 0).all(1)]
+
+    center_lat = location_df['Latitude'].mean()
+    center_long = location_df['Longitude'].mean()
+
+    lat = location_df['Latitude'].to_numpy()
+    long = location_df['Longitude'].to_numpy()
+
+    return location_df, center_lat, center_long, lat, long
+
+
+def map_plot(df_, df_title):
+    '''
+    Plots an .html map of a particular feature
+
+    params
+    ======
+    df_ (pandas.core.frame.DataFrame): pandas dataframe
+    df_title(str): aids in consistent naming
+
+    attrs
+    =====
+    none
+
+    returns
+    =======
+    map_ (folium.folium.Map): object contian the map data with overlay
+    '''
+    location_df, center_lat, center_long, lat, long = make_location_df(df_)
+
+    map_ = folium.Map(location=[center_lat, center_long], zoom_start=11)
+
+    for lat_, long_ in zip(lat, long):
+        folium.CircleMarker(
+            location=[lat_, long_],
+            radius=3,
+            color=(0, 0, 0),
+            fill_color=(.5, .5, .5),
+            fill_opacity=0.05).add_to(map_)
+
+    map_.save(f'../figs/{df_title}_map.html')
+    return map_
