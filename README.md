@@ -1,49 +1,142 @@
 # Nashville EDA
 
-EDA of data from the Nashville Open Data Portal
+EDA of data from the Nashville Open Data Portal.
 
-## TODO
+## Table of Contents
 
-1. Convert `Call Received` to `DateTime` object
-2. Count duplicates
-    A. Keep most recent
-3. Make separate data of location data
-    1. Make heat maps of the Nashville area (categorize by type)
-4. Look for anomolies in different regions or responding officers
+* [BLUF](#bottom-line-up-front)
+* [Data](#data)
+* [Results](#results)
+* [Conclusion](#conclusion)
 
-## Notes (DELME)
+## Bottom Line Up Front
 
-1. Complaint number: MNPD incident number for the call, if an incident is generated for the call (not all calls generate incident reports)
-    1. Could be a clue as to whether in incident was more severe
-2. Only 17 entries in slice without missing data
-3. Duplicate entries (determined by `Event Number`) were removed. Kep the one with the fewest NaNs.
-
+* Live in the western half of Nashville, TN.
+* Lock everything when you're at work.
+* Get home at a reasonable hour.
 
 ## Data
 
-There are 6,374,126 rows and 19 features containing details about emergency and non-emergency calls for Metro Nashville Police Department service received by the Emergency Communications Center. The data is complied daily and was last updated on January 17, 2022.
+There are 6,374,126 rows and 19 features containing details about emergency and non-emergency calls for [Metro Nashville Police Department](https://data.nashville.gov/Police/Metro-Nashville-Police-Department-Calls-for-Servic/kwnd-qrrm) service received by the Emergency Communications Center. The data is complied daily and spans from January 1, 2015 to January 17, 2022.
 
-A sample of the data (10,000 rows) was used to perform initial exploratory data analyses (EDA). Four of the features (`Tencode Description`, `Tencode Suffix Description`, `Disposition Description`, `Mapped Location`) were excluded from the analyses since they are redundant.
+### Cleaning
 
+Many of the features contained redundant data or were determined to be unneeded for this analyis. The features kept are in the table below followed by a data dictionary.
 
-**Feature Manipulation**
+| # |  Column | Dtype |
+| --- | ------ | ----- |
+| 0 | Event Number | object |
+| 1 | Call Received | object |
+| 2 | Complaint Number | float64 |
+| 3 | Tencode | int64 |
+| 4 | Disposition Code | object |
+| 5 | Unit Dispatched | object |
+| 6 | Shift | object |
+| 7 | Latitude | float64 |
+| 8 | Longitude | float64 |
 
+* `Event Number`: Automatically generated CAD system ID number
+* `Call Received`: Date and time the call was answered by the ECC
+* `Complaint Number`: MNPD incident number for the call, if an incident is generated for the call (not all calls generate incident reports)
+* `Tencode`: Abbreviated codes used to represent common phrases used to describe the call
+* `Disposition Code`: Code used to describe the outcome of the call
+* `Unit Dispatched`: Callsign of the officer responding to the call
+* `Shift`: ECC shift during which the call occurred (A for day shift, B for evening shift, C for night shift)
+* `Latitude`: Rounded latitude for the call
+* `Longitude`: Rounded longitude for the call
 
+The only feature the required engineering was the `Tencode`. There is a suffix that is attached to some of the codes that provides some applifying information. This was removed due to its sparse use to provide a better clarity with fewer possibilities.
 
-| # |  Column |                     Non-Null Count | Dtype |
-| --- | ------ |                     -------------- | ----- |
-| 0 |  Event Number |               10000 non-null | object |
-| 1 |  Call Received |              10000 non-null | object |
-| 2 |  Complaint Number |           851 non-null |   float64 |
-| 3 |  Tencode |                    10000 non-null | int64 |
-| 4 |  Tencode Suffix |             6031 non-null |  object |
-| 5 |  Disposition Code |           9960 non-null |  object |
-| 6 |  Block |                      2260 non-null |  float64 |
-| 7 | Street Name |                2699 non-null |  object |
-| 8 | Unit Dispatched |            9309 non-null |  object |
-| 9 | Shift |                      10000 non-null | object |
-| 10 | Sector |                     7773 non-null |  object |
-| 11 | Zone |                       8727 non-null |  object |
-| 12 | RPA |                        7996 non-null |  float64 |
-| 13 | Latitude |                   1312 non-null |  float64 |
-| 14 | Longitude |                  1312 non-null |  float64 |
+The data was split into three dataframes based upon the `Tencode`: `Theft`, `Vehicle`, and `Violent`. Most of the `Tencodes` were quite simply to organize, e.g. `Holdup/Robbery` -> `Theft`, `Vehicle Accident-Property Damage` -> `Vehicle`, `Fight / Assault` -> `Violent`.
+
+Lastly, some rows were removed due to having suplicated `Event Numbers`. This was considered errant. The only row kept contained the fewest `NaN` values.
+
+## Results
+
+Each of these three categories were assessed for trends based upon the desnity of the data, geographical commonalities, and distributions.
+
+### Nullity Matrices
+
+#### Summary
+
+The most sparse features were `Complaint Number`, `Latitude`, and `Longitude`. The `Violent` data had the least missing data with the `Vehicle` data having the most, this is especially true for the `Complaint Number`. This suggests that the reporting practices are more thorough when there is a more severe infraction.
+
+#### Theft
+
+![theft](figs/Theft_nullity_matrix.png)
+
+#### Vehicle
+
+![vehicle](figs/Vehicle_nullity_matrix.png)
+
+#### Violent
+
+![vehicle](figs/Violent_nullity_matrix.png)
+
+### Geographical Commonalities
+
+#### Summary
+
+There are three regions on the eastern outskirts of Nashville, TN that have the a greater freqency of emergency and non-emergency calls reagrding thefts, vehicular accidents and citations, and violent crime. Many of the major thoroughfares that run through the city, e.g. 41A, 31E, 70, have comparable problems.
+
+#### Theft
+
+![theft](figs/Theft.png)
+
+#### Vehicle
+
+![vehicle](figs/Vehicle.png)
+
+#### Violent
+
+![vehicle](figs/Violent.png)
+
+### Tencode Distributions
+
+#### Theft
+
+While `Theft` occurs in great numbers that the other `Tencodes`, the other four codes can be combined as violent theft since they all involve in knowledge and intention of theft where someone is or may have been endangered.
+
+![theft](figs/Theft_distribution_of_tencodes.png)
+
+#### Vehicle
+
+`Traffic Violations` are by far the most common vehicular incident with accident occuring relatively infrequently.
+
+![vehicle](figs/Vehicle_distribution_of_tencodes.png)
+
+#### Violent
+
+While `Fighting` and `Shots` being fired are the most common violent interaction the results in a call to MNPD, they do not often result in a `Shooting`.
+
+![vehicle](figs/Violent_distribution_of_tencodes.png)
+
+### Time-Based Distributions
+
+#### Theft
+
+`Theft` is most prominent when most people are at work or running errands (0700 - 1900). There is no consistent trend year-over-year or by month.
+
+![theft](figs/Theft_distribution_by_hour.png)
+
+#### Vehicle
+
+While there is little signal in the monthly and hourly distributions, there has been a steep decline in MNPD calls regarding vehicular incidents in recent years.
+
+![vehicle](figs/Vehicle_distribution_by_year.png)
+
+#### Violent
+
+Most of the `violent` interactions occur during 1700 and 0000 when individuals are less likely to be at work and are more likely to be socializing.
+
+![vehicle](figs/Violent_distribution_by_hour.png)
+
+## Conclusion
+
+There are many areas in Nashville that do not commonly have theft, vehicular incidents, or violent crime. These areas tend to be on the western half od the city and away from major throughfares.
+
+Most of the thefts occur when indivduals are more likely at work and suggests the the offenders are seeking targets of opportunity.
+
+Driving has become safer in recent years
+
+Individuals are more likely to be violent in the evening. This coincides with when nightlife is more vibrant in Nashville. It is suggested to avoid late nights Downtown or in the western half of the city.
