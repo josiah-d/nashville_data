@@ -55,6 +55,14 @@ Lastly, some rows were removed due to having suplicated `Event Numbers`. This wa
 
 Each of these three categories were assessed for trends based upon the desnity of the data, geographical commonalities, and distributions.
 
+***HELPFUL HINTS***
+
+* Plot Colors
+    * `Theft` -> <span style="color:rgb(26, 77, 128)">BLUE</span>
+    * `Vehicle` -> <span style="color:rgb(26, 128, 77)">GREEN</span>
+    * `Violent` -> <span style="color:rgb(128, 26, 26)">RED</span>
+    * `Mean Value` -> <span style="color:rgb(230, 77, 26)">ORANGE</span>
+
 ### Nullity Matrices
 
 #### Summary
