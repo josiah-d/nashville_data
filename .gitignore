@@ -1,5 +1,11 @@
 data/
 src/.ipynb_checkpoints/eda-checkpoint.ipynb
+src/.ipynb_checkpoints/
+src/__pycache__/
+reports/.ipynb_checkpoints/
+
+
+
 
 
 
